@@ -1,0 +1,658 @@
+---
+title: "R Workshop <br> Based on Duke MEM <br> by Mine Cetinkaya-Rundel"
+author: "Jan Idziak"
+date: "11 September, 2016"
+output: ioslides_presentation
+---
+
+```{r setup, echo=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Outline
+
+- Initial data preparation
+
+- Data investigation
+
+- Basic data visualizations in ggplot
+    - scatter plot
+    - box plot
+    - histogram
+    - bar chart
+
+- data munging using dplyr
+
+# Data visualization
+
+## Load data 
+
+```{r load-data, warning=FALSE, message=FALSE}
+library(caret)
+library(dplyr)
+library(ggplot2)
+library(plotly)
+data("GermanCredit")
+```
+
+## Data Preparation {.smaller}
+
+```{r eval = FALSE} 
+str(GermanCredit)
+```
+
+```{r , cache=TRUE}
+names(GermanCredit)[1:20]
+```
+
+## Data Preparation cd...
+
+```{r , cache=TRUE}
+GermanCredit$Sex <- 
+  GermanCredit$Personal.Male.Divorced.Seperated +
+  GermanCredit$Personal.Male.Single + 
+  GermanCredit$Personal.Male.Married.Widowed
+
+GermanCredit$Sex <- ifelse(GermanCredit$Sex, "Male", "Female")
+```
+
+## Data Preparation cd...
+
+```{r , cache=TRUE}
+GermanCredit$Property <- 
+  sapply(1:dim(GermanCredit)[1], function(i)
+    if(GermanCredit$Property.RealEstate[i]){
+      "RealEstate"
+    } else if(GermanCredit$Property.Insurance[i]) {
+      "Insurance"
+    } else if(GermanCredit$Property.CarOther[i]) {
+      "CarOther"
+    } else {
+      "Unknown"
+    })
+```
+
+## Data Preparation cd...
+
+```{r , cache=TRUE}
+GermanCredit$Purpose <- 
+  names(GermanCredit[20:30])[max.col(GermanCredit[20:30])]
+```
+
+## Data Preparation cd... {.smaller}
+
+```{r , cache=TRUE}
+GermanCredit <- GermanCredit[, c(1:7, 10, 63:65)]
+str(GermanCredit, width = 80, strict.width = "wrap")
+```
+
+## Data visualization in R
+
+- Using base R functions
+
+- Using the `ggplot2` package $\leftarrow$ our focus today
+
+- Using a variety of other packages like `lattice`, `ggvis`, etc.
+
+## The Grammar of Graphics
+
+- Visualisation concept created by Wilkinson (1999)
+    - to define the basic elements of a statistical graphic 
+
+- Adapted for R by Wickham (2009) who created the `ggplot2` package
+    - consistent and compact syntax to describe statistical graphics
+    - highly modular as it breaks up graphs into semantic components 
+
+- Is not a guide which graph to choose and how to convey information best!
+
+Source: https://rpubs.com/timwinke/ggplot2workshop
+
+## The Grammar of Graphics - Terminology
+
+A statistical graphic is a...
+
+- mapping of **data**
+- to **aesthetic attributes** (color, size, xy-position)
+- using **geometric objects** (points, lines, bars)
+- with data being **statistically transformed** (summarised, log-transformed)
+- and mapped onto a specific **facet** and **coordinate system**
+    
+## Age vs. Amount {.smaller}
+
+```{r echo=FALSE, fig.height=3, fig.width=5, warning=FALSE, cache=T}
+ggplot(data = GermanCredit, aes(x = Age, y = Amount))+ geom_point() 
+library(magick)
+library(grid)
+frink <- image_read("https://jeroenooms.github.io/images/frink.png")
+homer <- image_read("http://www.logoeps.com/wp-content/uploads/2013/01/bart-simpson-logo-vector1.png")
+grid.raster(frink)
+```
+
+- Which data is used as an input?
+- What geometric objects are chosen for visualization?
+- What variables are mapped onto which attributes?
+- What type of scales are used to map data to aesthetics?
+- Are the variables statistically transformed before plotting?
+
+## Anatomy of ggplots
+
+```
+ggplot(data = [dataframe], aes(x = [var_x], y = [var_y], 
+       color = [var_for_color], fill = [var_for_fill], 
+       shape = [var_for_shape])) +
+    geom_[some_geom] +
+    ... # other options
+```
+
+## Biker age vs. crash hour - code
+
+```{r fig.height=3, fig.width=5}
+ggplot(data = GermanCredit, aes(x = Age, y = Amount)) +  geom_point()
+```
+
+## Altering features {.smaller}
+
+```{r echo=FALSE, fig.height=3, fig.width=5, warning=FALSE}
+ggplot(data = GermanCredit, aes(x = Age, y = Amount)) + geom_point(alpha = 0.5, color = "DarkGreen", 
+             shape = 17, size = I(3))
+grid.raster(homer)
+```
+
+- How did the plot change?
+- Are these changes based on data (i.e. can be mapped to variables in the dataset) or
+changes in preferences for geometric objects?
+
+## Altering features - code {.smaller}
+
+```{r fig.height=3, fig.width=5}
+ggplot(data = GermanCredit, aes(x = Age, y = Amount, size = 2)) +
+  geom_point(alpha = 0.5, color = "Sky Blue", shape = 17)
+```
+
+## Test yourself 
+
+<div class="question">
+How about creating this kind of graph? 
+</div>
+
+```{r fig.height=4, fig.width=7, echo = FALSE}
+GermanCredit_tmp <- GermanCredit[1:200, ]
+ggplot(data = GermanCredit_tmp, aes(x = Amount, y = Duration,
+                                color = Sex, size = Duration*Amount)) +
+  geom_point(alpha = 0.3)
+```
+
+## Test yourself cd..
+
+First step, trim the data.
+
+```{r fig.height=4, fig.width=7}
+GermanCredit_tmp <- GermanCredit[1:200, ]
+```
+
+## Test yourself cd..
+
+```{r fig.height=4, fig.width=7, echo = FALSE}
+GermanCredit_tmp <- GermanCredit[1:200, ]
+ggplot(data = GermanCredit_tmp, aes(x = Amount, y = Duration,
+                                color = Sex, size = Duration*Amount)) +
+  geom_point(alpha = 0.3)
+```
+
+## More alterations {.smaller}
+
+```{r echo=FALSE, fig.height=3, fig.width=8, warning=FALSE}
+ggplot(data = GermanCredit, aes(x = Age, y = Amount, color = Duration)) +
+  geom_point(alpha = 0.45) +
+  facet_grid(. ~ Sex)
+```
+
+- How did the plot change?
+- Are these changes based on data (i.e. can be mapped to variables in the dataset) or
+changes in preferences for geometric objects?
+
+## More alterations - code {.smaller}
+
+```{r fig.height=3, fig.width=8, warning=FALSE}
+ggplot(data = GermanCredit, aes(x = Age, y = Amount, color = Duration)) +
+  geom_point(alpha = 0.45) +
+  facet_grid(. ~ Sex)
+```
+
+## More alterations - code cd... {.smaller}
+
+```{r fig.height=3, fig.width=8, warning=FALSE}
+ggplot(data = GermanCredit, aes(x = Age, y = Amount, color = Duration,
+                                size = factor(NumberExistingCredits))) +
+  geom_point(alpha = 0.45) +
+  facet_grid(. ~ Sex)
+```
+
+
+## Anatomy of ggplots
+
+```
+ggplot(data = [dataframe], aes(x = [var_x], y = [var_y], 
+       color = [var_for_color], fill = [var_for_fill], 
+       shape = [var_for_shape])) +
+    geom_[some_geom] +
+    ... # other options
+```
+
+## Histograms
+
+```{r fig.height=3, fig.width=7, warning=FALSE}
+ggplot(data = GermanCredit, aes(x = Amount)) +
+  geom_histogram(binwidth = 500)
+```
+
+## Boxplots
+
+```{r fig.height=3, fig.width=8, warning=FALSE}
+ggplot(data = GermanCredit, aes(y = Age, x = Sex, fill = Sex)) +
+  geom_boxplot()
+```
+
+## Barplots
+
+```{r fig.height=3, fig.width=8, warning=FALSE}
+ggplot(data = GermanCredit, aes(x = Property)) +
+  geom_bar()
+```
+
+## Segmented barplots
+
+```{r fig.height=3, fig.width=9, warning=FALSE}
+ggplot(data = GermanCredit, aes(x = Property, fill = Purpose)) +
+  geom_bar()
+```
+
+## Segmented barplots - proportions
+
+```{r fig.height=3, fig.width=9, warning=FALSE}
+ggplot(data = GermanCredit, aes(x = Property, fill = Purpose)) +
+  geom_bar(position="fill")
+```
+
+## Try yourself 
+
+<div class="question">
+How about creating this kind of graph? 
+</div>
+
+```{r fig.height=3, fig.width=8, warning=FALSE, echo = FALSE}
+k <- ggplot(GermanCredit, aes(Purpose, fill=Class))
+k1 <- k + geom_bar(position="dodge") 
+k2 <- k1 + scale_fill_brewer() 
+k3 <- k2 + coord_flip()
+k4 <- k3 + facet_grid(. ~ Sex)
+k4
+```
+
+## Try yourself cd..
+
+```{r fig.height=3, fig.width=8, warning=FALSE, echo = FALSE}
+k1
+```
+
+## Try yourself cd..
+
+```{r fig.height=3, fig.width=8, warning=FALSE, echo = FALSE}
+k2
+```
+
+## Try yourself cd..
+
+```{r fig.height=3, fig.width=8, warning=FALSE, echo = FALSE}
+k3
+```
+
+## Try yourself DONE
+
+```{r fig.height=3, fig.width=8, warning=FALSE, echo = FALSE}
+k4
+```
+
+## More `ggplot2` resources
+
+- Visit http://docs.ggplot2.org /current/ for documentation on the current version
+of the `ggplot2` package. It's full of examples!
+
+- Refer to the `ggplot2` 
+[cheatsheet](https://www.rstudio.com/wp-content/uploads/2015/08/ggplot2-cheatsheet.pdf).
+
+## `plotly` trailer {.smaller}
+
+```{r fig.height=4, fig.width=7, warning=FALSE}
+plot_ly(GermanCredit, x = Duration, y = Amount, 
+        text = paste("Duration: ", Duration),
+        mode = "markers", color = Age, size = Duration)
+```
+
+## What else can be done with R 
+
+```{r fig.height=5, fig.width=7, warning=FALSE, echo = FALSE}
+# Load package
+library(networkD3)
+
+# Load data
+data(MisLinks)
+data(MisNodes)
+
+# Plot
+forceNetwork(Links = MisLinks, Nodes = MisNodes,
+            Source = "source", Target = "target",
+            Value = "value", NodeID = "name",
+            Group = "group", opacity = 0.8,
+            zoom = TRUE)
+```
+
+## What else can be done with R {.smaller}
+
+```{r fig.height=5, fig.width=7, warning=FALSE, echo = FALSE}
+suppressMessages(library(leaflet))
+
+m <- leaflet() %>%
+  addTiles() %>%  # Add default OpenStreetMap map tiles
+  addMarkers(lng=44.7693005, lat=41.6881125, popup="Techpark Tbilisi")
+m
+```
+
+# Data wrangling
+
+## Data wrangling in R
+
+- Using base R functions
+
+- Using the `dplyr` package $\leftarrow$ our focus today
+
+- Using a variety of other packages like `plyr`, `tidyr`, `lubridate`, etc.
+
+## Data wrangling with `dplyr`
+
+The `dplyr` package is based on the concepts of functions as verbs that manipulate data frames:
+
+- `filter()`: pick rows matching criteria
+- `select()`: pick columns by name 
+- `arrange()`: reorder rows 
+- `mutate()`: add new variables
+- `summarise()`: reduce variables to values
+
+## `dplyr` rules
+
+- First argument is a data frame
+- Subsequent arguments say what to do with data frame
+- Always return a data frame 
+- Avoid modify in place
+
+## Filter rows with `filter()`
+
+- Select a subset of rows in a data frame.
+- Easily filter for many conditions at once.
+
+## `filter()` {.smaller}
+
+for credits for new car
+
+```{r}
+GermanCredit %>%
+  filter(Purpose == "Purpose.Retraining") %>% 
+  select(Age, Amount, Sex, Class, Property)
+```
+
+## `filter()` {.smaller}
+
+Credits with purpose Retraining just for males
+ 
+```{r}
+GermanCredit %>%
+  filter(Purpose == "Purpose.Retraining", Sex == "Male") %>% 
+  select(Age, Amount, Sex, Class, Property)
+```
+
+## Commonly used logical operators in R {.smaller}
+
+operator    | definition
+------------|--------------------------
+`<`         | less than
+`<=`        |	less than or equal to
+`>`         | greater than
+`>=`        |	greater than or equal to
+`==`        |	exactly equal to
+`!=`        |	not equal to
+`x | y`     | `x` OR `y`
+`x & y`     | `x` AND `y`
+
+## Commonly used logical operators in R {.smaller}
+
+operator     | definition
+-------------|--------------------------
+`is.na(x)`   | test if `x` is `NA`
+`!is.na(x)`  | test if `x` is not `NA`
+`x %in% y`   | test if `x` is in `y`
+`!(x %in% y)`| test if `x` is not in `y`
+`!x`         | not `x`
+
+## Aside: real data is messy! {.smaller}
+
+<div class="question">
+This format of variable is not to nice, what can we do about it?
+</div>
+
+```{r}
+GermanCredit %>%
+  group_by(Purpose) %>%
+  summarise(Purpose_count = n())
+```
+
+## Cleaning up the data!
+
+- We're going to need to do some text parsing to clean up
+these data
+  
+- New R package: `stringr`
+
+## Install and load: `stringr`
+
+- Install:
+```{r eval=FALSE}
+install.packages("stringr")
+```
+
+- Load:
+```{r}
+library(stringr)
+```
+
+- Package reference: Most R packages come with a vignette that describe
+in detail what each function does and how to use them, they're incredibly
+useful resources (in addition to other worked out examples on the web)
+https://cran.r-project.org/web/packages/stringr/vignettes/stringr.html
+
+## Replace with `str_replace()` and add new variables with `mutate()` {.smaller}
+
+- Remember we want to do the following in the `Purpose` variable: Delete Purpose prefix for all the values
+ 
+```{r}
+GermanCredit <- GermanCredit %>%
+  mutate(Purpose = str_replace(Purpose, "Purpose.", "")) 
+```
+
+- Note that we're overwriting existing data and columns, so be careful!
+    + But remember, it's easy to revert if you make a mistake since we didn't
+    touch the raw data, we can always reload it and start over
+
+## Check before you move on {.smaller}
+
+Always check your changes and confirm code did what you wanted it to do
+
+```{r}
+GermanCredit %>%
+  group_by(Purpose) %>%
+  summarise(Purpose_count = n()) 
+```
+
+## `slice()` for certain row numbers {.smaller}
+
+First five
+```{r}
+GermanCredit %>%
+  slice(1:5)
+```
+
+## `slice()` for certain row numbers {.smaller}
+
+Last five
+```{r}
+last_row <- nrow(GermanCredit)
+GermanCredit %>%
+  slice((last_row-4):last_row)
+```
+
+## `select()` to keep only the variables you mention {.smaller}
+
+```{r}
+GermanCredit %>%
+  select(Class, Sex) %>%
+  table()
+```
+
+## or `select()`to exclude variables {.smaller}
+
+```{r}
+GermanCredit %>%
+  select(-Property) %>%
+  slice(1:5)
+```
+
+## `rename()` specific columns {.smaller}
+
+Correct typos and rename to make variable names shorter and/or more informative
+
+- Original names:
+```{r}
+names(GermanCredit)
+```
+
+- Rename `Sex` to `Gender`:
+```{r}
+GermanCredit <- GermanCredit %>%
+  rename(Gender = Sex)
+```
+
+## Check before you move on {.smaller}
+
+Always check your changes and confirm code did what you wanted it to do
+
+```{r}
+names(GermanCredit)
+```
+
+## `summarise()` in a new data frame {.smaller}
+
+```{r}
+GermanCredit %>%
+  group_by(Purpose) %>%
+  summarise(count = n()) %>%
+  arrange(count)
+```
+
+## and `arrange()` to order rows {.smaller}
+
+```{r}
+GermanCredit %>%
+  group_by(Purpose) %>%
+  summarise(count = n()) %>%
+  arrange(desc(count))
+```
+
+## More `dplyr` resources
+
+- Visit https://cran.r-project.org/web/packages/dplyr/vignettes/introduction.html for the
+package vignette.
+
+- Refer to the `dplyr` 
+[cheatsheet](https://www.rstudio.com/wp-content/uploads/2015/02/data-wrangling-cheatsheet.pdf).
+
+# Basic R syntax
+
+## Few important R syntax notes
+
+For when not working with `dplyr` or `ggplot2`
+
+- Refer to a variable in a dataset as `GermanCredit$Class`
+
+- Access any element in a dataframe using square brackets
+
+```{r}
+GermanCredit <- as.data.frame(GermanCredit)
+GermanCredit[1,5] # row 1, column 5
+```
+    
+    - For all observations in row 1: `GermanCredit[1, ]`
+    - For all observations in column 5: `GermanCredit[, 5]`
+
+# What's next?
+
+## Want more R? {.smaller}
+
+- Local install
+    - R: https://cran.r-project.org/
+    - RStudio: https://www.rstudio.com/products/RStudio/#Desktop
+
+- Resources for learning R:
+    - [Coursera](https://www.coursera.org/)
+    - [DataCamp](https://www.datacamp.com/)
+    - Many many online demos, resources, examples, as well as books 
+
+- Debugging R errors:
+    - Read the error!
+    - [StackOverflow](http://stackoverflow.com/)
+
+- Keeping up with what's new in R land:
+    - [R-bloggers](http://www.r-bloggers.com/)
+    - Twitter: #rstats
+
+## More materials 
+
+- [List of useful packages](https://support.rstudio.com/hc/en-us/articles/201057987-Quick-list-of-useful-R-packages)
+
+- [Shiny tutorial](http://shiny.rstudio.com/tutorial/lesson1/)
+
+- [Cheatsheets](https://www.rstudio.com/resources/cheatsheets/)
+
+- [ggplot2 compendium](http://docs.ggplot2.org/current/) 
+
+- [dplyr tutorial](https://www.dropbox.com/sh/i8qnluwmuieicxc/AAAgt9tIKoIm7WZKIyK25lh6a)
+
+- [ggplot2 tutorial](http://www.education.umd.edu/EDMS/fac/Harring/769L-Spring-2016/Resources/R-Resources/ggplot2-tutorial.pdf)
+
+- [visualizations htmlwidgets](http://gallery.htmlwidgets.org/)
+
+- [visualizations metricgraphics](http://hrbrmstr.github.io/metricsgraphics/)
+
+- [visualizations plotly](https://plot.ly/r/)
+
+## Useful Georgian read.csv
+
+- [Github page Jean-Sebastien Gourdet](https://github.com/geojsg/GeorgianUnicode)
+
+# Questions 
+
+# Exercise
+
+## Your turn
+Create a new dataframe that doesn't include observations where `Purpose = Other` since 
+it's not clear what this means.
+
+This new dataframe also should include observations for Man only, and for people older than 40 and younger than 60 
+
+Summarize the number of Good and Bad credits for each grup of `Property` arrange the table descending order.
+
+Create a visualization that will help answer which Married status is the most probable to have bad credits for whole data set. 
+
+## Contact 
+
+- Janek Idziak Jan.Idziak@gmail.com 
+
+- Michal Krason michal.krason1@gmail.com 

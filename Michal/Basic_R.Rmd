@@ -1,0 +1,414 @@
+---
+title: "Using R"
+author: "Michal Krason"
+date: "September 10, 2016"
+output: ioslides_presentation
+---
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Data structures
+## Basic data types
+Four most used atomic (lowest level) data types are:
+
+* Logical: TRUE/FALSE
+```{r}
+is.logical(FALSE)
+```
+* Integer: 1, 2, -3 etc.
+```{r}
+is.integer(1L)
+```
+https://github.com/jandziak/Tbilisi_R_intro
+
+## Basic data types
+
+* Double: 1.3, 4.2, -3 etc.
+```{r}
+is.double(1.7)
+```
+* Character: abcm, t, random
+```{r}
+is.character("random")
+```
+## Basic data types
+
+We can also check if our data is numeric, i.e. double or integer
+```{r}
+is.numeric(1L)
+is.numeric(3.5)
+```
+Converting the values between types is possible in the order they were presented: logical -> integer -> double -> character.
+
+This will be important e.g. when combining vectors (coercion).
+
+## Assigning variables
+
+Variables are assigned using '<-' operator.
+```{r}
+a <- "Just for show"
+a
+b <- c(7,4,5454)
+b[3]
+```
+
+## Vectors
+
+* Contain only atomic type elements
+
+* All elements are of the same type, different are coerced according to the priority presented before
+
+```{r}
+c(1L, 2.3)
+c(TRUE, "Take that!")
+```
+
+## Exercise
+
+* Predict the coercion of the following vectors
+```{r, eval=FALSE}
+c(1, FALSE)
+c("a", 1)
+c(TRUE, 1L)
+c(FALSE, "abc")
+```
+
+## Creating vectors
+
+* Shortcut for defining sequence
+```{r}
+2:6
+```
+* More complex sequence
+```{r}
+seq(2, 3, by=0.5)
+```
+
+## Basic functions
+
+* Repeating elements
+```{r}
+rep(2:4, times=3)
+x<-rep(c(7,3,6), times=c(1,4,3)); x
+```
+* Sorting
+```{r}
+sort(x)
+```
+
+## Basic functions
+
+* Reversing vector order
+```{r}
+rev(x)
+```
+* Summarizing amounts of elements
+```{r}
+table(x)
+```
+## Basic functions
+* Checking the class of the element
+```{r}
+class(x)
+```
+* Checking the structure of the element
+```{r}
+str(x)
+```
+
+## Selecting elements: by position
+* The fourth element
+```{r}
+x[4]
+```
+* All but the fourth.
+```{r}
+x[-4] 
+```
+## Selecting elements: by position
+* Elements two to four.
+```{r}
+x[2:4] 
+```
+* Elements one and five.
+```{r}
+x[c(1, 5)]
+```
+## Selecting elements: by value
+* Elements which are equal to 7.
+```{r}
+x[x == 7]
+```
+* All elements bigger than three.
+```{r}
+x[x > 3]
+```
+## Selecting elements: by value
+* Elements in the set 3, 6.
+```{r}
+x[x %in% c(3, 6)]
+```
+## Matrixes
+Let's create a vector of observations drawn from normal distribution and turn it into a matrix!
+```{r}
+x <- rnorm(12)
+m <- matrix(x, nrow = 3, ncol = 4)
+m
+```
+## Matrixes: selecting elements
+We can choose a single row
+```{r}
+m[1, ]
+```
+or a single column.
+```{r}
+m[, 3]
+```
+They are automatically turned into a vector. Transposing matrices is done using t().
+
+## Lists
+* Can contain different atomic types
+* Can be nested - a list may consist of several lists
+```{r}
+l <- list("a" = c(1,2,3), "bla", list(c(TRUE,FALSE), c(1L, 3L))); l
+```
+## Lists: selecting elements
+* Selecting an element of a list
+```{r}
+l[[1]]
+```
+* Selecting a list containing an element - preserve structure
+```{r}
+l[2]
+```
+## Lists: selecting elements
+* Selecting a named element
+```{r}
+l$a
+```
+* Addressing nested elements
+```{r}
+l[[3]][[2]]
+```
+## Data frames
+* A special case of a list where all elements are the same length.
+```{r}
+df <- data.frame(x = 1:3, y = c('a','b','c')); df
+```
+
+
+## Data frames: selecting elements
+* Can be accessed as a matrix
+```{r}
+df[, 1]
+```
+* or as a list.
+```{r}
+df$y
+```
+Something weird happened to 'y'. This is important, to avoid it we should set stringsAsFactors = FALSE.
+
+# Elements of syntax
+## Commonly used logical operators in R {.smaller}
+
+operator    | definition
+------------|--------------------------
+`<`         | less than
+`<=`        |	less than or equal to
+`>`         | greater than
+`>=`        |	greater than or equal to
+`==`        |	exactly equal to
+`!=`        |	not equal to
+`x | y`     | `x` OR `y`
+`x & y`     | `x` AND `y`
+
+## Commonly used logical operators in R {.smaller}
+
+operator     | definition
+-------------|--------------------------
+`is.na(x)`   | test if `x` is `NA`
+`!is.na(x)`  | test if `x` is not `NA`
+`x %in% y`   | test if `x` is in `y`
+`!(x %in% y)`| test if `x` is not in `y`
+`!x`         | not `x`
+
+## Exercise
+* Load GermanCredit data using data()
+* Select every second row
+* Remove the rows that have maximum Duration variable
+* Select only Duration, Amount, Age and Telephone variables
+* Remove the fourth variable
+
+## Exercise
+```{r, eval=FALSE}
+data("GermanCredit")
+exercise1 <- GermanCredit[seq(1,length(GermanCredit[,1]),2),]
+exercise1 <- exercise1[exercise1$Duration != max(exercise1$Duration),]
+exercise1 <- exercise1[c("Duration", "Amount", "Age", "Telephone")]
+exercise1 <- exercise1[, -4]
+```
+
+## If statements
+
+* Below an example of an if statement
+```{r}
+i <- 3
+if (i > 3){
+  print("Yes")
+} else if (i == 3){
+  print("No")
+} else {
+  print("I don't know")
+}
+```
+## For loop
+
+* Below an example of a for loop
+```{r}
+for (i in 1:4){
+  j <- i + 10
+  print(j)
+}
+```
+## While loop
+* Below an example of a while loop
+```{r}
+i <- 1
+while (i < 5){
+  print(i)
+  i <- i + 1
+}
+```
+## Functions
+* Below an example of a function 
+```{r}
+square <- function(x){
+  squared <- x*x
+  return(squared)
+}
+```
+## Exercise
+
+* Write a function that for given size produces a multiplication table of that size
+* For loop is probably the easiest way to do this
+
+## Exercise
+```{r}
+mult_table <- function(size) {
+  m <- matrix (0, ncol = size, nrow = size)
+  for (i in 1:size) {
+    for (j in 1:size) {
+      m[i,j] <- i*j
+    }
+  }
+  return(m)
+}
+mult_table(6)
+```
+
+# Useful functions
+## Useful functions: math
+
+* abs(x)
+* round(x, n)
+* log(x) 
+* sum(x)
+* exp(x)
+* mean(x)
+* sd(x)
+* quantile(x, q - optional)
+* cor(x, y)
+
+## Useful functions: reading and writing data
+```{r echo = F, warning=F, message=F}
+library(caret)
+setwd("C:\\Repository\\R_workshop\\Tbilisi_R_intro\\Michal")
+```
+
+```{r}
+GermanCredit <- read.table("GermanCredit.txt") 
+GermanCredit2 <- read.csv("GermanCredit2.csv") 
+str(GermanCredit)
+GermanJoint <- cbind(GermanCredit, GermanCredit2)
+write.csv(GermanJoint, "GermanJoint.csv")
+```
+## Useful functions: strings
+* Join multiple vectors together.
+```{r}
+x <- 1:5
+y <- rev(x)
+paste(x, y, sep = '')
+```
+* Join elements of a vector together.
+```{r}
+paste(x, collapse = ' ') 
+```
+## Useful functions: strings
+* Find regular expression matches in x.
+```{r}
+x <- c("random.mail@gmail.com", "bla", "abc@d", "ef@gh.i")
+pattern <- "@([a-z]+)\\."
+grep(pattern, x) 
+```
+* Replace matches in x with a string.
+```{r}
+gsub(pattern, "@spam.", x)
+```
+## Useful functions: strings
+* Convert to uppercase / lowercase.
+```{r}
+x <- "aBvdaET"
+toupper(x)
+tolower(x)
+```
+## Useful functions: linear model
+* Remember the german data? Let's look for linear dependencies.
+```{r}
+lm(Amount ~ Duration, data = GermanJoint)
+```
+## Useful functions: basic plot
+Now let's see it on a plot.
+```{r}
+plot(GermanJoint$Duration, GermanJoint$Amount)
+```
+
+## Useful functions: sapply
+
+Instead of using loops, in many cases it is faster to work on vectors using 'apply' family.
+```{r}
+m<-matrix(rnorm(1000),ncol=5,nrow=200)
+sapply(c(1:ncol(m)),function(i) {mean(m[ ,i])})
+```
+## Exercise
+* Read in German data part 3
+* Join into one data frame
+* Extract the names containing "credit" (regardless of capitalization)
+* Use apply to calculate the standard deviation of each of those columns
+* Save the result in a csv file
+
+## Exercise
+```{r}
+GermanCredit3 <- read.csv("GermanCredit3.csv")
+GermanFinal <- cbind(GermanJoint, GermanCredit3)
+GermanSel <- GermanFinal[, grep("credit",tolower(names(GermanFinal)))]
+GermanSD <- sapply(c(1:length(GermanSel[1,])),
+                   function(i) {sd(GermanSel[, i])})
+GermanSD
+write.csv(GermanSD, "Result.csv")
+```
+
+## Libraries in R
+
+* Download and install a package from CRAN.
+```{r, eval=FALSE}
+install.packages(‘dplyr’)
+```
+* Load the package into the session, making all
+its functions available to use.
+```{r, eval=FALSE}
+library(‘dplyr’)
+```
+* Use a particular function called explicitly from a package.
+```{r, eval=FALSE}
+dplyr::select
+```
