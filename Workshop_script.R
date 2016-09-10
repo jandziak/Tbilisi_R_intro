@@ -47,11 +47,14 @@ GermanCredit$Purpose <-
 GermanCredit <- GermanCredit[, c(1:7, 10, 63:65)]
 str(GermanCredit, width = 80, strict.width = "wrap")
 ggplot(data = GermanCredit, aes(x = Age, y = Amount)) +
+  geom_point()
 
 ## Altering features 
 
 ggplot(data = GermanCredit, aes(x = Age, y = Amount)) +
   geom_point(alpha = 0.5, color = "DarkGreen", 
+             shape = 17, size = I(3))
+
 GermanCredit_tmp <- GermanCredit[1:200, ]
 ggplot(data = GermanCredit_tmp, aes(x = Amount, y = Duration,
                                     color = Sex, size = Duration*Amount)) +
@@ -90,7 +93,6 @@ ggplot(data = GermanCredit, aes(x = Age, y = Amount, color = Duration,
 
 ggplot(data = GermanCredit, aes(x = Amount)) +
   geom_histogram(binwidth = 500)
-
 
 ## Boxplots
 
@@ -192,14 +194,12 @@ GermanCredit %>%
 GermanCredit %>%
   select(-Property) %>%
   slice(1:5)
-
 names(GermanCredit)
 
 GermanCredit <- GermanCredit %>%
   rename(Gender = Sex)
 
 names(GermanCredit)
-
 GermanCredit %>%
   group_by(Purpose) %>%
   summarise(count = n()) %>%
